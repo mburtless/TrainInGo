@@ -2,12 +2,13 @@ package main
 
 import (
     "fmt"
-    proto "github.com/golang/protobuf/proto"
-    "github.com/google/gtfs-realtime-bindings/golang/gtfs"
-    "io/ioutil"
-    "log"
-    "net/http"
+    "github.com/mburtless/trainingo/pkg/feed"
 	"os"
+    "log"
+    /*proto "github.com/golang/protobuf/proto"
+    "github.com/google/gtfs-realtime-bindings/golang/gtfs"
+	"io/ioutil"
+	"net/http"*/
 )
 
 type Credentials struct {
@@ -68,26 +69,9 @@ func init() {
 }
 
 func main() {
-
-	// Create our http client and pull the feed
-    client := &http.Client{}
-	req, err := http.NewRequest("GET", lines["a"].url, nil)
-    //req.SetBasicAuth(username, password)
-    resp, err := client.Do(req)
-    defer resp.Body.Close()
-    if err != nil {
-        log.Fatal(err)
-    }
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        log.Fatal(err)
-    }
-    feed := gtfs.FeedMessage{}
-    err = proto.Unmarshal(body, &feed)
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, entity := range feed.Entity {
+	mtaFeed := *(feed.ReadFeed(lines["a"].url))
+	fmt.Printf("%p\n", &mtaFeed)
+    for _, entity := range mtaFeed.Entity {
         if entity.TripUpdate != nil {
 			tripUpdate := entity.TripUpdate
 			trip := tripUpdate.Trip
