@@ -2,11 +2,12 @@ package feed
 
 import (
     proto "github.com/golang/protobuf/proto"
-    "github.com/google/gtfs-realtime-bindings/golang/gtfs"
+    gtfs "github.com/mburtless/trainingo/pkg/transit_realtime"
+	//"github.com/google/gtfs-realtime-bindings/golang/gtfs"
     "io/ioutil"
     "log"
 	"net/http"
-	"fmt"
+	//"fmt"
 )
 
 func ReadFeed(url string) *gtfs.FeedMessage {
@@ -25,11 +26,12 @@ func ReadFeed(url string) *gtfs.FeedMessage {
     if err != nil {
         log.Fatal(err)
     }
-    feed := gtfs.FeedMessage{}
+
+	feed := gtfs.FeedMessage{}
 	err = proto.Unmarshal(body, &feed)
     if err != nil {
         log.Fatal(err)
     }
-	fmt.Printf("%p\n", &feed)
+	//fmt.Printf("%v\n", feed)
 	return &feed
 }
