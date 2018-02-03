@@ -1,11 +1,12 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
     "github.com/mburtless/trainingo/pkg/feed"
+    "github.com/mburtless/trainingo/pkg/parser"
 	"os"
     "log"
-    gtfs "github.com/mburtless/trainingo/pkg/transit_realtime"
+    //gtfs "github.com/mburtless/trainingo/pkg/transit_realtime"
     /*proto "github.com/golang/protobuf/proto"
     "github.com/google/gtfs-realtime-bindings/golang/gtfs"
 	"io/ioutil"
@@ -73,9 +74,10 @@ func main() {
 	mtaFeed := *(feed.ReadFeed(lines["a"].url))
 	fmt.Printf("%p\n", &mtaFeed)
     for _, entity := range mtaFeed.Entity {
-		var vehPos *gtfs.VehiclePosition = entity.GetVehicle()
-		fmt.Printf("VehicleID: %v\n", vehPos)
-        if entity.TripUpdate != nil {
+		//var vehPos *gtfs.VehiclePosition = entity.GetVehicle()
+		//fmt.Printf("VehicleID: %v\n", vehPos)
+        parser.ParseVehicle(entity)
+		if entity.TripUpdate != nil {
 			tripUpdate := entity.TripUpdate
 			trip := tripUpdate.Trip
 			tripId := trip.TripId
