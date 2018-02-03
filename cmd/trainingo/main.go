@@ -72,17 +72,22 @@ func init() {
 
 func main() {
 	mtaFeed := *(feed.ReadFeed(lines["a"].url))
-	fmt.Printf("%p\n", &mtaFeed)
-    for _, entity := range mtaFeed.Entity {
+	//fmt.Printf("%p\n", &mtaFeed)
+    var vehicles []parser.Vehicle
+	for _, entity := range mtaFeed.Entity {
 		//var vehPos *gtfs.VehiclePosition = entity.GetVehicle()
 		//fmt.Printf("VehicleID: %v\n", vehPos)
-        parser.ParseVehicle(entity)
-		if entity.TripUpdate != nil {
+		if entity.GetVehicle() != nil {
+			// Probably a VehiclePosition message, parse it
+			vehicles = append(vehicles, parser.ParseVehicle(entity))
+		}
+		/*if entity.TripUpdate != nil {
 			tripUpdate := entity.TripUpdate
 			trip := tripUpdate.Trip
 			tripId := trip.TripId
 			routeId := trip.RouteId
 			fmt.Printf("Trip ID: %s\nRoute ID: %s\n\n", *tripId, *routeId)
-		}
+		}*/
 	}
+	fmt.Printf("%v\n", vehicles)
 }
