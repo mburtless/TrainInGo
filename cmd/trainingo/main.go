@@ -67,11 +67,12 @@ func init() {
 	lines["g"] = &line{g_url, "green"}
 	lines["7"] = &line{seven_url, "purple"}
 	//fmt.Printf("%v\n", lines["q"])
-
+	// Init Stops from stops.txt
 }
 
 func main() {
 	mtaFeed := *(feed.ReadFeed(lines["a"].url))
+	stops := *parser.ParseStops("third_party/nyct/stops.txt")
 	//fmt.Printf("%p\n", &mtaFeed)
     var vehicles []parser.Vehicle
 	for _, entity := range mtaFeed.Entity {
@@ -90,4 +91,5 @@ func main() {
 		}*/
 	}
 	fmt.Printf("%v\n", vehicles)
+	fmt.Printf("%s\n", stops["R41"].StopName)
 }
