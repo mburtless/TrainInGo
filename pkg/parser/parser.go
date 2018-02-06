@@ -6,6 +6,7 @@ import (
 	"os"
 	"log"
 	//"fmt"
+	"regexp"
 	"strings"
 	"strconv"
 )
@@ -30,9 +31,12 @@ func ParseVehicle(entity *gtfs.FeedEntity) (Vehicle) {
 	// Takes a vehicle message entity parses and returns struct
 	var vehPos *gtfs.VehiclePosition = entity.GetVehicle()
 	var trip *gtfs.TripDescriptor = vehPos.GetTrip()
+	tripId := trip.GetTripId()
+	r, _ := regexp.Compile(`\d{6}_\w\.{2}\w`)
+	tripId = r.FindString(tripId)
 	veh := Vehicle {
 		Time:      vehPos.GetTimestamp(),
-		Trip:      trip.GetTripId(),
+		Trip:      tripId,
 		Route:     trip.GetRouteId(),
 		Status:    vehPos.GetCurrentStatus(),
 		StopSequence:   vehPos.GetCurrentStopSequence(),
@@ -74,4 +78,57 @@ func ParseStops(filepath string) (*map[string]*Stop){
 	}
 
 	return &stops
+}
+
+func ParseStopSequences(filepath string, stops *map[string]*Stop) (*map[string][]*Stop){
+//func ParseStopSequences(filepath string, stops *map[string]*Stop) {
+	// Takes filepath for stop_times.txt and pointer to stops map
+	// Returns a map indexed on tripid containing slices of pointers to stops
+	// Indexed on stop_sequence
+	stopSequences := make(map[string][]*Stop)
+
+	file, err := os.Open(filepath)
+	defer file.Close()
+	if err != nil {
+		log.Fatal("Unable to read ", filepath, "! ", err)
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	r, _ := regexp.Compile(`\w{3}_\d{6}_\w+\.+\w`)
+	for scanner.Scan() {
+		l := strings.Split(scanner.Text(), ",")
+		tId := r.FindString(l[0])
+		sId := l[3]
+		//sSeq := l[4]
+		//fmt.Printf("trip_id: %s station_id: %s stop_sequence: %s\n", tId, (*stops)[sId].StopName, sSeq)
+		// check if tripid exists already, if so append to array of stop sequences
+		if _, ok := stopSequences[tId]; ok {
+			//s := &stopSequences[tId]
+			stopSequences[tId] = append(stopSequences[tId], (*stops)[sId])
+		} else {
+			//if not, create array, append this stop and add as elem in map
+			s := []*Stop{(*stops)[sId]}
+			stopSequences[tId] = s
+		}
+	}
+	//fmt.Printf("%v\n", stopSequences)
+	return &stopSequences
+}
+func ParseStopId(veh *Vehicle) (string) {
+	// Takes a vehicle and returns current stopid
+	/*s := strings.Split(veh.Trip, "..")
+	//dir := s[1]
+	stopId := veh.Route + strconv.FormatUint(uint64(veh.StopSequence), 10) + dir*/
+	stopId := strconv.FormatUint(uint64(veh.StopSequence), 10)
+	if len(stopId) < 2 {
+		stopId = "0" + stopId
+	}
+
+	// Search stop_times.txt for trip_id and stop seq
+	// On match, save stop_id
+	// Search stops.txt on stop_id
+	// On match, save stop_name
+
+	return stopId
 }
