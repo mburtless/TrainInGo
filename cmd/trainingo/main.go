@@ -26,6 +26,9 @@ type line struct {
 // Init map of all lines
 var lines = map[string]*line{}
 
+// Svc code required to determine weekend vs weekday trip ids
+var svcCode string
+
 func init() {
 	//Import API Key from ENV var MTAKEY
 	var c Credentials
@@ -68,14 +71,7 @@ func init() {
 	lines["g"] = &line{g_url, "green"}
 	lines["7"] = &line{seven_url, "purple"}
 	//fmt.Printf("%v\n", lines["q"])
-	// Init Stops from stops.txt
-}
-
-func main() {
-	mtaFeed := *(feed.ReadFeed(lines["3"].url))
-	stops := *parser.ParseStops("third_party/nyct/stops.txt")
-	stopSequences := *parser.ParseStopSequences("third_party/nyct/stop_times.txt", &stops)
-	svcCode := "WKD"
+	// Init svc code
 	currentTime := time.Now()
 	currentDay := currentTime.Weekday()
 	switch currentDay {
@@ -83,7 +79,16 @@ func main() {
 			svcCode = "SUN"
 		case 6:
 			svcCode = "SAT"
+		default:
+			svcCode = "WKD"
 	}
+}
+
+func main() {
+	mtaFeed := *(feed.ReadFeed(lines["3"].url))
+	stops := *parser.ParseStops("third_party/nyct/stops.txt")
+	stopSequences := *parser.ParseStopSequences("third_party/nyct/stop_times.txt", &stops)
+
 	//fmt.Printf("%v\n", stopSequences)
     var vehicles []parser.Vehicle
 	for _, entity := range mtaFeed.Entity {
@@ -105,8 +110,8 @@ func main() {
 	for _, v := range vehicles {
 		tId := svcCode + "_" + v.Trip
 		vehStop := stopSequences[tId]
-		fmt.Printf("%v %v %v\n", v.Trip, v.StopSequence, len(vehStop))
-		if uint32(len(vehStop)) >= v.StopSequence && v.StopSequence != 0 {
+		//fmt.Printf("%v %v %v\n", v.Trip, v.StopSequence, len(vehStop))
+		if  v.StopSequence <= uint32(len(vehStop)) && v.StopSequence != 0 {
 			//fmt.Printf("Current stopseq is %d\n", v.StopSequence)
 			fmt.Printf("%s is %s %s\n", tId, v.Status, vehStop[v.StopSequence].StopName)
 		}
@@ -115,5 +120,5 @@ func main() {
 		}
 	}
 	//fmt.Printf("%v\n", vehicles)
-	fmt.Printf("%s\n", stops["R41"].StopName)
+	//fmt.Printf("%s\n", stops["R41"].StopName)
 }

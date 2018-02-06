@@ -80,12 +80,12 @@ func ParseStops(filepath string) (*map[string]*Stop){
 	return &stops
 }
 
-func ParseStopSequences(filepath string, stops *map[string]*Stop) (*map[string][]*Stop){
+func ParseStopSequences(filepath string, stops *map[string]*Stop) (*map[string]map[uint32]*Stop){
 //func ParseStopSequences(filepath string, stops *map[string]*Stop) {
 	// Takes filepath for stop_times.txt and pointer to stops map
 	// Returns a map indexed on tripid containing slices of pointers to stops
 	// Indexed on stop_sequence
-	stopSequences := make(map[string][]*Stop)
+	stopSequences := make(map[string]map[uint32]*Stop)
 
 	file, err := os.Open(filepath)
 	defer file.Close()
@@ -100,15 +100,26 @@ func ParseStopSequences(filepath string, stops *map[string]*Stop) (*map[string][
 		l := strings.Split(scanner.Text(), ",")
 		tId := r.FindString(l[0])
 		sId := l[3]
-		//sSeq := l[4]
+		//sSeq := strconv.FormatUint(l[4], 10)
+		var sSeq uint32
+		tmpSeq, err := strconv.ParseUint(l[4], 10, 32)
+		if err != nil {
+			//log.Fatal("Undable to parse stop lat/lon ", err)
+			sSeq = uint32(0.0)
+		} else {
+			sSeq = uint32(tmpSeq)
+		}
 		//fmt.Printf("trip_id: %s station_id: %s stop_sequence: %s\n", tId, (*stops)[sId].StopName, sSeq)
 		// check if tripid exists already, if so append to array of stop sequences
 		if _, ok := stopSequences[tId]; ok {
 			//s := &stopSequences[tId]
-			stopSequences[tId] = append(stopSequences[tId], (*stops)[sId])
+			//stopSequences[tId] = append(stopSequences[tId], (*stops)[sId])
+			stopSequences[tId][sSeq] = (*stops)[sId]
 		} else {
-			//if not, create array, append this stop and add as elem in map
-			s := []*Stop{(*stops)[sId]}
+			//if not, create map, append this stop and add as elem in map
+			//s := []*Stop{(*stops)[sId]}
+			s := make(map[uint32]*Stop)
+			s[sSeq] = (*stops)[sId]
 			stopSequences[tId] = s
 		}
 	}
