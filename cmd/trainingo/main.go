@@ -4,34 +4,30 @@ import (
 	"fmt"
     "github.com/mburtless/trainingo/pkg/feed"
     "github.com/mburtless/trainingo/pkg/parser"
-	"os"
-    "log"
+    "github.com/mburtless/trainingo/configs"
+	//"os"
+    //"log"
 	"time"
-    //gtfs "github.com/mburtless/trainingo/pkg/transit_realtime"
-    /*proto "github.com/golang/protobuf/proto"
-    "github.com/google/gtfs-realtime-bindings/golang/gtfs"
-	"io/ioutil"
-	"net/http"*/
 )
 
-type Credentials struct {
+/*type Credentials struct {
 	Key string `json:"key"`
-}
+}*/
 
-type line struct {
+/*type line struct {
 	url string
 	color string
-}
+}*/
 
 // Init map of all lines
-var lines = map[string]*line{}
+//var lines = map[string]*line{}
 
 // Svc code required to determine weekend vs weekday trip ids
 var svcCode string
 
 func init() {
 	//Import API Key from ENV var MTAKEY
-	var c Credentials
+	/*var c Credentials
 	c.Key = os.Getenv("MTAKEY")
 	if len(c.Key) < 1 {
 		log.Fatal("Error: Env var MTAKEY must contain a valid MTA API Key")
@@ -70,8 +66,8 @@ func init() {
 	lines["l"] = &line{l_url, "grey"}
 	lines["g"] = &line{g_url, "green"}
 	lines["7"] = &line{seven_url, "purple"}
-	//fmt.Printf("%v\n", lines["q"])
-	// Init svc code
+	*/
+	// Init svcCode based on today's date
 	currentTime := time.Now()
 	currentDay := currentTime.Weekday()
 	switch currentDay {
@@ -85,19 +81,22 @@ func init() {
 }
 
 func main() {
-	mtaFeed := *(feed.ReadFeed(lines["3"].url))
+	// Grab the api key and latest feed
+	apiKey := configs.InitCredentials("MTAKEY")
+	lineFeeds := configs.InitLineFeeds(apiKey)
+	mtaFeed := *(feed.ReadFeed(lineFeeds["3"]))
+	// Parse stops.txt for list of stops
 	stops := *parser.ParseStops("third_party/nyct/stops.txt")
+	// Parse stop_times.txt for list of trip ids correlated with their stop sequences and stops 
 	stopSequences := *parser.ParseStopSequences("third_party/nyct/stop_times.txt", &stops)
 
-	//fmt.Printf("%v\n", stopSequences)
+	// Itterate through all VehiclePosition messages in the feed
+	// Add them to slice of vehicles to track
     var vehicles []parser.Vehicle
 	for _, entity := range mtaFeed.Entity {
-		//var vehPos *gtfs.VehiclePosition = entity.GetVehicle()
-		//fmt.Printf("VehicleID: %v\n", vehPos)
 		if entity.GetVehicle() != nil {
 			// Probably a VehiclePosition message, parse it
 			vehicles = append(vehicles, parser.ParseVehicle(entity))
-			//fmt.Printf("%v\n", entity.GetVehicle())
 		}
 		/*if entity.TripUpdate != nil {
 			tripUpdate := entity.TripUpdate
@@ -107,18 +106,17 @@ func main() {
 			fmt.Printf("Trip ID: %s\nRoute ID: %s\n\n", *tripId, *routeId)
 		}*/
 	}
+
+	// Itterate through all vehicle positions found and print their current status
 	for _, v := range vehicles {
 		tId := svcCode + "_" + v.Trip
 		vehStop := stopSequences[tId]
-		//fmt.Printf("%v %v %v\n", v.Trip, v.StopSequence, len(vehStop))
 		if  v.StopSequence <= uint32(len(vehStop)) && v.StopSequence != 0 {
-			//fmt.Printf("Current stopseq is %d\n", v.StopSequence)
 			fmt.Printf("%s is %s %s\n", tId, v.Status, vehStop[v.StopSequence].StopName)
 		}
+		// Handle the possibility that current stopsequence could be 0
 		if v.StopSequence == 0 {
 			fmt.Printf("Stopseq for %s is %d!\n", tId, v.StopSequence)
 		}
 	}
-	//fmt.Printf("%v\n", vehicles)
-	//fmt.Printf("%s\n", stops["R41"].StopName)
 }
