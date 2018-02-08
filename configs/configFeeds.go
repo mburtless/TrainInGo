@@ -1,5 +1,9 @@
 package configs
 
+import (
+	"time"
+)
+
 func InitLineFeeds(apiKey string) (map[string]string) {
 	// Initializes and returns our map of feeds
 	var lineFeeds = map[string]string{}
@@ -41,4 +45,20 @@ func InitLineFeeds(apiKey string) (map[string]string) {
 	lineFeeds["7"] = seven_url
 
 	return lineFeeds
+}
+
+func InitSvcCode() (string) {
+	var svcCode string
+	currentTime := time.Now()
+	currentDay := currentTime.Weekday()
+	switch currentDay {
+		case 0:
+			svcCode = "SUN"
+		case 6:
+			svcCode = "SAT"
+		default:
+			svcCode = "WKD"
+	}
+
+	return svcCode
 }
