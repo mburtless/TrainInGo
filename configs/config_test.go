@@ -7,6 +7,16 @@ import(
 	"github.com/mburtless/trainingo/configs"
 )
 
+func TestInitSvcCode(t *testing.T) {
+	svcCode := configs.InitSvcCode()
+	valid := map[string]bool{"SUN": true, "SAT": true, "WKD": true}
+	if valid[svcCode] {
+		return
+	} else{
+		t.Errorf("InitSvcCode() returned %q but expecting either SUN, SAT or WKD", svcCode)
+	}
+}
+
 func TestInitCredentials(t *testing.T) {
 	var value string
 	key := "TEST"
